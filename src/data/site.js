@@ -29,8 +29,29 @@ export const site = {
   hero: {
     title: 'Anatomy of Time',
     cue: 'Scroll to explore',
-    scrollLength: 500, // total pinned scroll, in % of viewport height
-    lerp: 0.12, // smoothing toward the scroll target, 0..1 (lower = softer)
+    scrollLength: 300, // total pinned scroll, in % of viewport height (lower = faster film)
+    lerp: 0.22, // catch-up per frame toward the scroll position, 0..1 (higher = snappier)
+    fps: 24, // frame rate of the hero footage
+
+    /* Slow connections. The site never waits for the whole film:
+       the loader leaves after `loaderMaxWait` ms at most, the hero shows the
+       chapter posters while the film downloads, then switches to the video.
+       Data-saver / 2G visitors get posters only, no video download at all. */
+    network: {
+      loaderMaxWait: 3500, // ms the loader may wait for the film
+      stallTimeout: 15000, // ms without any data before the download is abandoned
+      totalTimeout: 120000, // ms before a download is abandoned altogether
+    },
+
+    /* After the film downloads, its frames are cached as images in the browser
+       (no server work). Scrubbing then draws images instead of seeking video,
+       which is instant on every device. Set enabled: false to keep video seeking. */
+    frameCache: {
+      enabled: true,
+      maxWidth: 1600, // px, desktop
+      mobileMaxWidth: 960, // px, screens under 768 px
+      quality: 0.82, // JPEG quality of cached frames
+    },
     videos: [
       { src: '/media/scroll.mp4', poster: '/img/hero-poster.jpg' },
       // Previous four-clip sequence, still in /public/media if you want it back:

@@ -1,85 +1,115 @@
 /* ==========================================================================
    Loader
-   Fetches every hero video as a Blob so seeking is local and smooth.
-   Falls back to the plain file URL if a fetch fails.
+   Hero videos are fetched as Blobs (seeking a local Blob is smooth; seeking a
+   streamed MP4 is not). Downloads run in the background: the loader waits at
+   most `loaderMaxWait` ms, then the site opens and the hero upgrades itself
+   when the film arrives. Stalled or failed downloads resolve to null, and the
+   hero simply stays on its posters.
    ========================================================================== */
 import { gsap } from 'gsap';
 
-async function fetchAsBlob(src, onProgress) {
-  const res = await fetch(src);
-  if (!res.ok) throw new Error(`${src}: HTTP ${res.status}`);
+/**
+ * Start one background download.
+ * @returns {{ progress: number, done: boolean, promise: Promise<string|null>, onProgress: (cb)=>void }}
+ */
+function download(src, { stallTimeout, totalTimeout }) {
+  const listeners = new Set();
+  const item = {
+    progress: 0,
+    done: false,
+    onProgress: (cb) => listeners.add(cb),
+  };
+  const emit = (p) => {
+    item.progress = p;
+    listeners.forEach((cb) => cb(p));
+  };
 
-  const total = Number(res.headers.get('content-length')) || 0;
-  // Stream when possible so the progress bar moves during the download.
-  if (!res.body || !total) {
-    const blob = await res.blob();
-    onProgress(1);
-    return blob;
-  }
+  const ctrl = new AbortController();
+  let stallTimer = 0;
+  const kick = () => {
+    clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => ctrl.abort(new Error('stalled')), stallTimeout);
+  };
+  const totalTimer = setTimeout(() => ctrl.abort(new Error('timeout')), totalTimeout);
 
-  const reader = res.body.getReader();
-  const chunks = [];
-  let loaded = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    loaded += value.length;
-    onProgress(Math.min(loaded / total, 1));
-  }
-  onProgress(1);
-  return new Blob(chunks, { type: res.headers.get('content-type') || 'video/mp4' });
+  item.promise = (async () => {
+    try {
+      kick();
+      const res = await fetch(src, { signal: ctrl.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const total = Number(res.headers.get('content-length')) || 0;
+      let blob;
+      if (res.body && total) {
+        const reader = res.body.getReader();
+        const chunks = [];
+        let loaded = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          kick();
+          chunks.push(value);
+          loaded += value.length;
+          emit(Math.min(loaded / total, 0.999));
+        }
+        blob = new Blob(chunks, { type: res.headers.get('content-type') || 'video/mp4' });
+      } else {
+        blob = await res.blob();
+      }
+      emit(1);
+      return URL.createObjectURL(blob);
+    } catch (err) {
+      console.warn(`[loader] ${src} not used (${err?.message || err}). Showing posters instead.`);
+      emit(1);
+      return null;
+    } finally {
+      clearTimeout(stallTimer);
+      clearTimeout(totalTimer);
+      item.done = true;
+    }
+  })();
+
+  return item;
+}
+
+/** Start all hero downloads at once. */
+export function startDownloads(sources, network) {
+  return sources.map((src) => download(src, network));
+}
+
+/** Combined progress (0..1) of a set of downloads. */
+export function totalProgress(downloads) {
+  if (!downloads || !downloads.length) return 1;
+  return downloads.reduce((a, d) => a + d.progress, 0) / downloads.length;
 }
 
 /**
- * @param {string[]} sources  video paths
- * @param {{ skipVideos?: boolean }} opts
- * @returns {Promise<string[]>} playable URLs (blob: when possible)
+ * Show the loader until the downloads finish or `maxWait` ms pass, whichever is first.
+ * @param {{ downloads: ReturnType<typeof startDownloads> | null, maxWait: number }} opts
  */
-export async function runLoader(sources, { skipVideos = false } = {}) {
+export async function runLoader({ downloads, maxWait }) {
   const root = document.getElementById('loader');
   const fill = root.querySelector('.loader__fill');
   const pct = root.querySelector('[data-loader-pct]');
-
-  const progress = new Array(sources.length).fill(0);
   const shown = { v: 0 };
   const render = () => {
     fill.style.transform = `scaleX(${shown.v})`;
     pct.textContent = String(Math.round(shown.v * 100));
   };
-  const update = () => {
-    const target = sources.length ? progress.reduce((a, b) => a + b, 0) / sources.length : 1;
-    gsap.to(shown, { v: target, duration: 0.6, ease: 'power3.out', overwrite: true, onUpdate: render });
-  };
+  const update = () =>
+    gsap.to(shown, { v: totalProgress(downloads), duration: 0.6, ease: 'power3.out', overwrite: true, onUpdate: render });
 
-  let urls;
-  if (skipVideos) {
-    urls = sources.slice();
-    progress.fill(1);
-    update();
-  } else {
-    urls = await Promise.all(
-      sources.map((src, i) =>
-        fetchAsBlob(src, (p) => {
-          progress[i] = p;
-          update();
-        })
-          .then((blob) => URL.createObjectURL(blob))
-          .catch((err) => {
-            console.warn('[loader] Falling back to streamed video:', err);
-            progress[i] = 1;
-            update();
-            return src;
-          })
-      )
-    );
+  if (downloads && downloads.length) {
+    downloads.forEach((d) => d.onProgress(update));
+    await Promise.race([
+      Promise.all(downloads.map((d) => d.promise)),
+      new Promise((resolve) => setTimeout(resolve, maxWait)),
+    ]);
   }
 
-  // Let the bar finish its last stretch before leaving.
+  // Finish the line (the film keeps downloading in the background if needed).
   await new Promise((resolve) => {
     gsap.to(shown, { v: 1, duration: 0.5, ease: 'power3.out', overwrite: true, onUpdate: render, onComplete: resolve });
   });
-  return urls;
 }
 
 export function hideLoader() {

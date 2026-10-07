@@ -29,7 +29,10 @@ Everything you are likely to change is in this one file:
 | `address`, `instagram`, `hours`, `footerNote` | Footer content |
 | `hero.videos` | Footage scrubbed by scroll (currently `scroll.mp4`). Add more entries and the scroll is split equally between them. The old four clips are commented out there |
 | `hero.chapters` | The four captions (eyebrow, title, line) spread evenly over the pinned scroll, plus a `poster` each for reduced-motion visitors |
-| `hero.scrollLength` | Total pinned scroll, in % of viewport height (default 500) |
+| `hero.scrollLength` | Total pinned scroll, in % of viewport height (default 300). Lower = the film plays faster per scroll |
+| `hero.lerp` | How fast the film catches up with the scroll, 0 to 1 (default 0.22). Higher = snappier |
+| `hero.network` | Slow-connection handling: max loader wait, stall and total download timeouts |
+| `hero.frameCache` | In-browser frame cache for instant scrubbing (size and JPEG quality, or `enabled: false`) |
 | `hero.lerp` | Scrub smoothing, 0 to 1. Lower is softer |
 | `setTime` | Heading, model line, specs, city chips (IANA time zones), dial crop/pivot, hand pivots, hand lengths, beat rate |
 | `setTime.hands.hour.filter` | CSS filter that turns the rose-gold hour hand steel. Set to `'none'` if you supply a steel hand |
@@ -92,6 +95,23 @@ src/modules/viewing.js      booking form to WhatsApp
 src/modules/cursor.js       desktop cursor ring
 src/styles/*.css
 ```
+
+## Slow connections and smooth scrubbing
+
+The site never waits for the whole film. The loader leaves after at most
+`hero.network.loaderMaxWait` (3.5 s). The hero then upgrades itself in three steps:
+
+1. **Posters**: the chapter images crossfade with scroll while the film downloads,
+   with a small "Loading film 42%" line under the nav.
+2. **Video**: once downloaded, the film is scrubbed by seeking.
+3. **Frames**: in the background the browser plays the film once, off screen, and keeps
+   every frame as a compressed image (about 10 to 15 MB in memory for 5 s at 24 fps).
+   Scrubbing then draws images to a canvas, which is instant on every device. Each switch
+   happens on an identical frame, so it is invisible.
+
+If the download stalls (`stallTimeout`) or times out (`totalTimeout`), the hero stays
+on posters. Visitors with Data Saver on, or on a 2G connection, never download the
+film at all.
 
 ## Behaviour notes
 

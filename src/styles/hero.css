@@ -15,8 +15,10 @@
 }
 
 .hero__media,
+.hero__posters,
 .hero__video,
-.hero__poster {
+.hero__poster,
+.hero__canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -29,18 +31,76 @@
   object-position: center;
 }
 
-/* Only the active video is visible. No crossfade: frames match at boundaries. */
+/* Three stages (see hero.js): posters -> video -> frames.
+   1. Posters crossfade per chapter while the film downloads. */
+.hero__poster {
+  opacity: 0;
+  transition: opacity 1.1s var(--ease);
+}
+.hero__poster.is-active,
+.hero__poster:first-child {
+  opacity: 1; /* the first poster stays underneath, so a late image never shows black */
+}
+.hero__posters {
+  transition: opacity 1s var(--ease);
+}
+.hero.mode-video .hero__posters,
+.hero.mode-frames .hero__posters {
+  opacity: 0;
+}
+
+/* 2. Only the active video is visible. No crossfade: frames match at boundaries. */
 .hero__video {
   opacity: 0;
 }
-.hero__video.is-active {
+.hero.mode-video .hero__video.is-active {
   opacity: 1;
 }
-.hero__poster {
-  transition: opacity 0.9s var(--ease);
-}
-.hero.is-ready .hero__poster {
+
+/* 3. Cached frames drawn to a canvas. Swapped in on an identical frame. */
+.hero__canvas {
+  display: block;
   opacity: 0;
+}
+.hero.mode-frames .hero__canvas {
+  opacity: 1;
+}
+
+/* Small download indicator, only while posters stand in for the film */
+.hero__status {
+  position: absolute;
+  right: var(--gutter);
+  top: calc(var(--nav-h) + 8px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.9s var(--ease), visibility 0s linear 0.9s;
+  pointer-events: none;
+}
+.hero__status.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.9s var(--ease), visibility 0s;
+}
+.hero__status .label {
+  font-variant-numeric: tabular-nums;
+}
+.hero__status-bar {
+  display: block;
+  width: 72px;
+  height: 1px;
+  background: var(--line);
+  overflow: hidden;
+}
+.hero__status-bar span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s var(--ease);
 }
 
 /* Soft edge vignette + a left/bottom scrim for text contrast */

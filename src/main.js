@@ -12,7 +12,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 
 import { site, whatsappLink } from './data/site.js';
-import { runLoader, hideLoader } from './modules/loader.js';
+import { startDownloads, runLoader, hideLoader } from './modules/loader.js';
 import { buildHero, initHero } from './modules/hero.js';
 import { buildSetTime, initSetTime } from './modules/setTime.js';
 import { buildCollection, initCollection } from './modules/collection.js';
@@ -34,10 +34,11 @@ window.scrollTo(0, 0);
    -------------------------------------------------------------------------- */
 let lenis = null;
 if (!reduced) {
+  // lerp-based smoothing follows the wheel closely (a long `duration` felt sluggish).
   lenis = new Lenis({
-    duration: 1.25,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    lerp: 0.14,
     smoothWheel: true,
+    wheelMultiplier: 1,
   });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((time) => lenis.raf(time * 1000));
@@ -181,11 +182,18 @@ function initNav() {
    Boot
    -------------------------------------------------------------------------- */
 async function boot() {
+  // Data saver or a 2G connection: never download the film, use posters.
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const constrained = !!(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || '')));
   const sources = site.hero.videos.map((v) => v.src);
-  const urls = await runLoader(sources, { skipVideos: reduced });
+  const downloads = reduced || constrained ? null : startDownloads(sources, site.hero.network);
+
+  // Waits for the film, but never longer than loaderMaxWait. A slow download
+  // continues in the background and the hero upgrades itself when it lands.
+  await runLoader({ downloads, maxWait: site.hero.network.loaderMaxWait });
 
   // Create pinned ScrollTriggers in page order: hero, then collection.
-  initHero(sections.hero, { urls, reduced, scrollTo: scrollToTarget });
+  initHero(sections.hero, { downloads, reduced, scrollTo: scrollToTarget });
   initCollection(sections.collection, { reduced, lockScroll, scrollToTarget });
   initViewing(sections.viewing, { scrollToTarget });
   initNav();
