@@ -1,0 +1,203 @@
+/* ==========================================================================
+   Section 4 · Private Viewing
+   ========================================================================== */
+.viewing__grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(48px, 8vw, 140px);
+  align-items: start;
+}
+.viewing__lead {
+  position: sticky;
+  top: calc(var(--nav-h) + 48px);
+}
+.viewing__line {
+  font-size: clamp(44px, 5.6vw, 92px);
+  line-height: 1.02;
+  margin-bottom: 32px;
+  max-width: 12ch;
+}
+.viewing__note {
+  color: var(--muted);
+  max-width: 40ch;
+  margin-bottom: 40px;
+}
+
+/* Form */
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px 28px;
+  padding-top: 12px;
+}
+.form.is-highlight .field__input {
+  border-bottom-color: var(--gold-soft);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field--full {
+  grid-column: 1 / -1;
+}
+.field__label {
+  color: var(--muted);
+}
+.field__label small {
+  color: var(--faint);
+  letter-spacing: 0.12em;
+  font-size: 10px;
+}
+.field__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  border-radius: 0;
+  color: var(--bone);
+  font-size: 16px; /* prevents iOS zoom on focus */
+  line-height: 1.4;
+  color-scheme: dark;
+  transition: border-color 0.6s var(--ease);
+  appearance: none;
+  -webkit-appearance: none;
+}
+.field__input::placeholder {
+  color: #8a8177;
+}
+.field__input:focus {
+  outline: none;
+  border-bottom-color: var(--gold);
+}
+.field__input:focus-visible {
+  outline: none;
+}
+select.field__input {
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 10px) 52%, calc(100% - 5px) 52%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 28px;
+}
+select.field__input option {
+  background: var(--ink-2);
+  color: var(--bone);
+}
+textarea.field__input {
+  resize: vertical;
+  min-height: 110px;
+}
+.field__error {
+  min-height: 1.4em;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--danger);
+}
+.field.is-invalid .field__input {
+  border-bottom-color: var(--danger);
+}
+.form__foot {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 28px;
+}
+.form__status {
+  font-size: var(--fs-small);
+  color: var(--muted);
+  max-width: 40ch;
+}
+
+@media (max-width: 900px) {
+  .viewing__grid {
+    grid-template-columns: 1fr;
+  }
+  .viewing__lead {
+    position: static;
+  }
+}
+@media (max-width: 560px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+  .form__foot .btn {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.footer {
+  padding: clamp(72px, 10vw, 140px) var(--gutter) 40px;
+  border-top: 1px solid var(--line);
+}
+.footer__inner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.footer__mark {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(40px, 9vw, 150px);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  margin-bottom: clamp(48px, 7vw, 96px);
+  white-space: nowrap;
+}
+.footer__cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.2fr);
+  gap: 40px 32px;
+  padding-bottom: 56px;
+}
+.footer__cols .label {
+  margin-bottom: 14px;
+}
+.footer__cols p,
+.footer__cols a {
+  display: block;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--bone);
+}
+.footer__cols a {
+  width: fit-content;
+  background: linear-gradient(var(--gold), var(--gold)) 0 100% / 0 1px no-repeat;
+  transition: background-size 0.9s var(--ease), color 0.6s var(--ease);
+}
+.footer__cols a:hover {
+  background-size: 100% 1px;
+  color: var(--gold);
+}
+.footer__note {
+  color: var(--muted) !important;
+}
+.footer__base {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--faint);
+}
+
+@media (max-width: 900px) {
+  .footer__cols {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .footer__cols {
+    grid-template-columns: 1fr;
+  }
+}

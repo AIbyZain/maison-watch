@@ -1,0 +1,312 @@
+/* ==========================================================================
+   Section 1 · Anatomy of Time
+   ========================================================================== */
+.hero {
+  position: relative;
+}
+
+.hero__stage {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.hero__media,
+.hero__video,
+.hero__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero__video,
+.hero__poster {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Only the active video is visible. No crossfade: frames match at boundaries. */
+.hero__video {
+  opacity: 0;
+}
+.hero__video.is-active {
+  opacity: 1;
+}
+.hero__poster {
+  transition: opacity 0.9s var(--ease);
+}
+.hero.is-ready .hero__poster {
+  opacity: 0;
+}
+
+/* Soft edge vignette + a left/bottom scrim for text contrast */
+.hero__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 80% at 55% 50%, transparent 52%, rgba(11, 10, 9, 0.85) 100%),
+    linear-gradient(90deg, rgba(11, 10, 9, 0.72) 0%, rgba(11, 10, 9, 0.25) 34%, transparent 55%);
+}
+
+/* Intro title (fades as scrolling begins) */
+.hero__intro {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(40px, 9vh, 96px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  pointer-events: none;
+}
+.hero__title {
+  font-size: var(--fs-h1);
+  line-height: 0.92;
+  max-width: 9ch;
+}
+.hero__cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 8px;
+}
+.hero__cue-line {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 64px;
+  background: var(--line);
+  overflow: hidden;
+}
+.hero__cue-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: scaleY(0);
+  transform-origin: top;
+  animation: cue 2.6s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+}
+@keyframes cue {
+  0% { transform: scaleY(0); transform-origin: top; }
+  45% { transform: scaleY(1); transform-origin: top; }
+  55% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+/* Chapter copy */
+.hero__copy {
+  position: absolute;
+  left: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(440px, 38vw);
+  min-height: 260px;
+  pointer-events: none;
+}
+.hero__panel {
+  position: absolute;
+  inset: auto 0 auto 0;
+  top: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+.hero__panel .label {
+  color: var(--gold);
+  margin-bottom: 22px;
+}
+.hero__panel h2 {
+  font-size: clamp(36px, 3.8vw, 60px);
+  line-height: 1.02;
+  margin-bottom: 22px;
+}
+.hero__panel p:last-child {
+  color: var(--muted);
+  max-width: 36ch;
+}
+
+/* Progress rail */
+.hero__rail {
+  position: absolute;
+  right: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%);
+  height: min(280px, 40vh);
+  width: 24px;
+}
+.hero__rail-track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+.hero__rail-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+.hero__dots {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+.hero__dot {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+}
+.hero__dot::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--ink);
+  transition: transform 0.9s var(--ease), background-color 0.9s var(--ease), border-color 0.9s var(--ease);
+}
+.hero__dot.is-active::before {
+  background: var(--gold);
+  border-color: var(--gold);
+  transform: scale(1.45);
+}
+.hero__dot.is-passed::before {
+  border-color: var(--gold);
+}
+
+/* Mobile: copy sits at the bottom */
+@media (max-width: 767px) {
+  .hero__vignette {
+    background:
+      radial-gradient(ellipse 110% 70% at 50% 42%, transparent 50%, rgba(11, 10, 9, 0.8) 100%),
+      linear-gradient(0deg, rgba(11, 10, 9, 0.92) 0%, rgba(11, 10, 9, 0.55) 30%, transparent 52%);
+  }
+  .hero__copy {
+    top: auto;
+    bottom: 40px;
+    transform: none;
+    width: auto;
+    right: calc(var(--gutter) + 28px);
+    min-height: 0;
+    height: 230px;
+  }
+  .hero__panel {
+    top: auto;
+    bottom: 0;
+  }
+  .hero__panel h2 {
+    font-size: 34px;
+    margin-bottom: 14px;
+  }
+  .hero__panel .label {
+    margin-bottom: 14px;
+  }
+  .hero__panel p:last-child {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .hero__intro {
+    flex-direction: column;
+    align-items: flex-start;
+    bottom: 40px;
+  }
+  .hero__title {
+    font-size: 58px;
+  }
+  .hero__cue {
+    flex-direction: row;
+  }
+  .hero__cue-line {
+    width: 48px;
+    height: 1px;
+  }
+  .hero__cue-line::after {
+    animation-name: cue-x;
+  }
+  .hero__rail {
+    right: 12px;
+    height: 160px;
+    top: auto;
+    bottom: 60px;
+    transform: none;
+  }
+}
+@keyframes cue-x {
+  0% { transform: scaleX(0); transform-origin: left; }
+  45% { transform: scaleX(1); transform-origin: left; }
+  55% { transform: scaleX(1); transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+
+/* ==========================================================================
+   Reduced motion: no pin, no scrubbing. Posters with simple fades.
+   ========================================================================== */
+.hero--static .hero__stage {
+  height: auto;
+  min-height: 100svh;
+}
+.hero--static .hero__stage > .hero__poster {
+  position: absolute;
+}
+.hero__chapters {
+  display: grid;
+  gap: 0;
+}
+.hero__chapter {
+  position: relative;
+  min-height: 90svh;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--gutter);
+  padding-bottom: clamp(48px, 10vh, 120px);
+  overflow: hidden;
+}
+.hero__chapter img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero__chapter::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(11, 10, 9, 0.9) 0%, rgba(11, 10, 9, 0.3) 45%, transparent 70%);
+}
+.hero__chapter .hero__panel {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  visibility: visible;
+  max-width: 480px;
+}
+.fade-in {
+  opacity: 0;
+  transition: opacity 1.2s ease !important;
+}
+.fade-in.is-in {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__cue-line::after {
+    animation: none;
+    transform: scale(1);
+  }
+}

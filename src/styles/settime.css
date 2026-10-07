@@ -1,0 +1,238 @@
+/* ==========================================================================
+   Section 2 · Set the Time
+   ========================================================================== */
+.settime {
+  padding: clamp(96px, 12vw, 180px) var(--gutter);
+}
+
+.settime__grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  grid-template-areas:
+    'watch head'
+    'watch info';
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(40px, 7vw, 120px);
+  row-gap: 48px;
+  align-items: start;
+}
+
+.settime__head {
+  grid-area: head;
+  padding-top: 4vh;
+}
+.settime__head h2 {
+  font-size: var(--fs-h2);
+  margin-bottom: 18px;
+}
+.settime__head p {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: var(--fs-lead);
+  color: var(--muted);
+}
+
+.settime__watch {
+  grid-area: watch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Square box that crops the 16:9 dial around the pivot */
+.dialbox {
+  position: relative;
+  width: min(100%, 74vh, 640px);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-mask-image: radial-gradient(closest-side, #000 93%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 93%, transparent 100%);
+}
+.dialbox__img {
+  position: absolute;
+  max-width: none;
+  /* set by JS from the pivot + crop in site.js */
+  width: var(--dial-w, 199%);
+  left: var(--dial-l, -50%);
+  top: var(--dial-t, -5%);
+  height: auto;
+  pointer-events: none;
+}
+.hand {
+  position: absolute;
+  max-width: none;
+  height: auto;
+  pointer-events: none;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 1.2s var(--ease);
+}
+.dialbox.is-ready .hand {
+  opacity: 1;
+}
+.hand--hour {
+  z-index: 2;
+}
+.hand--minute {
+  z-index: 3;
+}
+.hand--second {
+  z-index: 4;
+}
+
+/* Invisible hit areas for dragging (and keyboard focus) */
+.hand-hit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 44px;
+  margin-top: -22px;
+  transform-origin: 0 50%;
+  z-index: 5;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+.hand-hit--minute {
+  z-index: 6;
+}
+.hand-hit:focus-visible::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--gold);
+  box-shadow: 0 0 0 1px rgba(201, 162, 122, 0.25);
+}
+.dialbox.is-dragging,
+.dialbox.is-dragging .hand-hit {
+  cursor: grabbing;
+}
+
+/* Readout + chips */
+.readout {
+  margin-top: clamp(28px, 4vh, 48px);
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(56px, 7vw, 104px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  display: flex;
+  align-items: baseline;
+}
+.readout__sep {
+  color: var(--gold);
+  padding: 0 0.06em;
+  transform: translateY(-0.06em);
+}
+.readout__seg {
+  display: inline-block;
+  min-width: 1.05em;
+  text-align: center;
+}
+.readout__seg--s {
+  color: var(--muted);
+}
+.readout__zone {
+  margin-top: 10px;
+  min-height: 1.5em;
+}
+
+.chips {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.chip {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  font-size: var(--fs-label);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.6s var(--ease), border-color 0.6s var(--ease), background-color 0.6s var(--ease);
+}
+.chip:hover {
+  color: var(--bone);
+  border-color: var(--line-strong);
+}
+.chip[aria-pressed='true'] {
+  color: var(--ink);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+/* Info column */
+.settime__info {
+  grid-area: info;
+  align-self: end;
+  padding-bottom: 6vh;
+}
+.settime__model {
+  font-family: var(--serif);
+  font-size: var(--fs-h3);
+  font-weight: 300;
+  line-height: 1.15;
+  margin-bottom: 36px;
+}
+.specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 24px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+  margin-bottom: 44px;
+}
+.specs dt {
+  margin-bottom: 6px;
+}
+.specs dd {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+@media (max-width: 1023px) {
+  .settime__grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'head'
+      'watch'
+      'info';
+    grid-template-rows: auto;
+    row-gap: 40px;
+  }
+  .settime__head {
+    padding-top: 0;
+  }
+  .settime__info {
+    padding-bottom: 0;
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 767px) {
+  .dialbox {
+    width: min(100%, 420px);
+  }
+  .readout {
+    font-size: 54px;
+  }
+  .chip {
+    padding: 0 12px;
+  }
+}
