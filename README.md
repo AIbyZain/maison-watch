@@ -27,8 +27,9 @@ Everything you are likely to change is in this one file:
 | `whatsappDisplay` | The number as shown in the footer |
 | `currency` | Prefix for prices, e.g. `PKR`, `AED`, `USD` |
 | `address`, `instagram`, `hours`, `footerNote` | Footer content |
-| `hero.videos` | The ordered "Anatomy of Time" sequence. Each entry has `src`, `poster`, `eyebrow`, `title`, `line`. Reorder or delete entries and the scroll segments adapt automatically |
-| `hero.scrollLengthPerVideo` | Scroll distance per video, in % of viewport height (default 125, so 4 videos = 500vh) |
+| `hero.videos` | Footage scrubbed by scroll (currently `scroll.mp4`). Add more entries and the scroll is split equally between them. The old four clips are commented out there |
+| `hero.chapters` | The four captions (eyebrow, title, line) spread evenly over the pinned scroll, plus a `poster` each for reduced-motion visitors |
+| `hero.scrollLength` | Total pinned scroll, in % of viewport height (default 500) |
 | `hero.lerp` | Scrub smoothing, 0 to 1. Lower is softer |
 | `setTime` | Heading, model line, specs, city chips (IANA time zones), dial crop/pivot, hand pivots, hand lengths, beat rate |
 | `setTime.hands.hour.filter` | CSS filter that turns the rose-gold hour hand steel. Set to `'none'` if you supply a steel hand |
@@ -40,9 +41,10 @@ Everything you are likely to change is in this one file:
 Keep the same file names and paths, or update the paths in `site.js`.
 
 ```
-public/media/hero-1.mp4 … hero-4.mp4     scroll-scrubbed sequence (muted, never autoplayed)
+public/media/scroll.mp4                  hero scroll animation (muted, never autoplayed)
+public/media/hero-1.mp4 … hero-4.mp4     previous four-clip sequence (not loaded unless re-enabled)
 public/img/hero-poster.jpg               assembled watch, also the first-frame poster
-public/img/exploded-1.jpg … exploded-3.jpg   posters for videos 2 to 4 (used for reduced motion)
+public/img/exploded-1.jpg … exploded-3.jpg   posters for chapters 2 to 4 (used for reduced motion)
 public/img/dial.jpg                      dial with NO hands
 public/img/hand-hour.jpg / hand-minute.jpg / hand-second.jpg
 public/img/gallery/watch-01.jpg … watch-04.jpg
@@ -50,7 +52,7 @@ public/img/gallery/watch-01.jpg … watch-04.jpg
 
 **Videos.** The last frame of each clip should match the first frame of the next:
 the site switches clips on the exact scroll boundary with no crossfade.
-All four videos are downloaded as Blobs before the site opens (that is what the
+Every listed video is downloaded as a Blob before the site opens (that is what the
 loader bar shows), because seeking a local Blob is smooth while seeking a streamed
 MP4 is not.
 
@@ -69,11 +71,11 @@ the minute hand reaches the minute track (`setTime.lengths`).
 Re-encode each video so every frame is a keyframe and the audio track is removed:
 
 ```bash
-ffmpeg -i hero-1.mp4 -an -c:v libx264 -g 1 -crf 20 -pix_fmt yuv420p -movflags +faststart hero-1-scrub.mp4
+ffmpeg -i scroll.mp4 -an -c:v libx264 -g 1 -crf 20 -pix_fmt yuv420p -movflags +faststart scroll-scrub.mp4
 ```
 
-Repeat for each clip, then either rename the outputs to `hero-1.mp4` … `hero-4.mp4`
-or point `hero.videos[n].src` in `site.js` at the new files. Files get larger,
+Then either rename the output to `scroll.mp4` or point `hero.videos[0].src` in
+`site.js` at the new file. Files get larger,
 but seeking becomes nearly instant on every browser.
 
 ## Structure

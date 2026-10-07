@@ -1,13 +1,15 @@
 /* ==========================================================================
    Section 1 · Anatomy of Time
-   Pinned stage; vertical scroll scrubs an ordered sequence of videos.
+   Pinned stage; vertical scroll scrubs the video(s) in site.hero.videos.
+   Captions come from site.hero.chapters and are spread over the whole scroll,
+   independent of how many videos there are.
    ========================================================================== */
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { site } from '../data/site.js';
 
 const EPS = 0.04; // stay a hair before the very end of a clip (avoids a blank last frame)
-const INTRO_END = 0.1; // in segment units: chapter copy appears after the intro title fades
+const INTRO_END = 0.1; // in chapter units: captions appear after the intro title fades
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -23,7 +25,7 @@ function panelHTML(v, i) {
 
 /** Build markup. Called before the loader finishes so the poster sits behind it. */
 export function buildHero(section, { reduced }) {
-  const { title, cue, videos } = site.hero;
+  const { title, cue, videos, chapters } = site.hero;
   const first = videos[0];
 
   if (reduced) {
@@ -37,7 +39,7 @@ export function buildHero(section, { reduced }) {
         </div>
       </div>
       <div class="hero__chapters">
-        ${videos
+        ${chapters
           .map(
             (v, i) => `
           <div class="hero__chapter fade-in">
@@ -73,13 +75,13 @@ export function buildHero(section, { reduced }) {
       </div>
 
       <div class="hero__copy" aria-live="polite">
-        ${videos.map(panelHTML).join('')}
+        ${chapters.map(panelHTML).join('')}
       </div>
 
       <div class="hero__rail">
         <span class="hero__rail-track"><span class="hero__rail-fill"></span></span>
         <div class="hero__dots">
-          ${videos
+          ${chapters
             .map(
               (v, i) =>
                 `<button class="hero__dot" type="button" data-index="${i}" aria-label="Go to chapter ${i + 1}: ${esc(
@@ -112,7 +114,8 @@ export function initHero(section, { urls, reduced, scrollTo }) {
     return () => io.disconnect();
   }
 
-  const n = site.hero.videos.length;
+  const n = site.hero.videos.length; // video segments
+  const m = site.hero.chapters.length; // caption chapters
   const videos = [...section.querySelectorAll('.hero__video')];
   const panels = [...section.querySelectorAll('.hero__panel')];
   const dots = [...section.querySelectorAll('.hero__dot')];
@@ -157,9 +160,10 @@ export function initHero(section, { urls, reduced, scrollTo }) {
     v.load();
   });
 
-  let target = 0; // in segment units, 0..n
+  let target = 0; // overall pinned progress, 0..1
   let smooth = 0;
   let activeIdx = -1;
+  let chapterIdx = -2;
   let textIdx = -2;
 
   // While scrubbing we wait for the previous seek to land before issuing the next one,
@@ -186,13 +190,18 @@ export function initHero(section, { urls, reduced, scrollTo }) {
       else if (j > idx) seek(j, 0, true);
       v.classList.toggle('is-active', j === idx);
     });
+    activeIdx = idx;
+  }
+
+  function setChapter(idx) {
+    if (idx === chapterIdx) return;
     dots.forEach((d, j) => {
       d.classList.toggle('is-active', j === idx);
       d.classList.toggle('is-passed', j < idx);
       if (j === idx) d.setAttribute('aria-current', 'step');
       else d.removeAttribute('aria-current');
     });
-    activeIdx = idx;
+    chapterIdx = idx;
   }
 
   function setText(idx) {
@@ -218,15 +227,21 @@ export function initHero(section, { urls, reduced, scrollTo }) {
     textIdx = idx;
   }
 
-  function render(p) {
+  function render(progress) {
+    // Video: split the scroll equally between clips.
+    const p = progress * n;
     const idx = Math.min(Math.max(Math.floor(p), 0), n - 1);
     const local = Math.min(Math.max(p - idx, 0), 1);
     if (idx !== activeIdx) setActive(idx);
     const d = durations[idx];
     seek(idx, Math.min(Math.max(local * d, 0), Math.max(d - EPS, 0)));
 
-    setText(p < INTRO_END ? -1 : idx);
-    const introA = Math.min(Math.max(1 - p / 0.08, 0), 1);
+    // Captions: split the scroll equally between chapters.
+    const c = progress * m;
+    const cIdx = Math.min(Math.max(Math.floor(c), 0), m - 1);
+    setChapter(cIdx);
+    setText(c < INTRO_END ? -1 : cIdx);
+    const introA = Math.min(Math.max(1 - c / 0.08, 0), 1);
     intro.style.opacity = introA;
     intro.style.transform = `translateY(${(1 - introA) * -24}px)`;
     intro.style.visibility = introA === 0 ? 'hidden' : 'visible';
@@ -235,23 +250,23 @@ export function initHero(section, { urls, reduced, scrollTo }) {
   const st = ScrollTrigger.create({
     trigger: section,
     start: 'top top',
-    end: () => `+=${(window.innerHeight * n * site.hero.scrollLengthPerVideo) / 100}`,
+    end: () => `+=${(window.innerHeight * site.hero.scrollLength) / 100}`,
     pin: true,
     anticipatePin: 1,
     invalidateOnRefresh: true,
     onUpdate: (self) => {
-      target = self.progress * n;
+      target = self.progress;
       fill.style.transform = `scaleY(${self.progress})`;
     },
   });
 
-  target = st.progress * n;
+  target = st.progress;
   smooth = target;
   render(smooth);
 
   const tick = () => {
     const diff = target - smooth;
-    if (Math.abs(diff) < 0.0004) smooth = target;
+    if (Math.abs(diff) < 0.00005) smooth = target;
     else smooth += diff * lerp;
     render(smooth);
   };
@@ -260,7 +275,7 @@ export function initHero(section, { urls, reduced, scrollTo }) {
   dots.forEach((d) =>
     d.addEventListener('click', () => {
       const j = Number(d.dataset.index);
-      scrollTo(st.start + (st.end - st.start) * ((j + 0.2) / n));
+      scrollTo(st.start + (st.end - st.start) * ((j + 0.2) / m));
     })
   );
 

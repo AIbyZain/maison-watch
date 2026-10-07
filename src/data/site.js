@@ -20,38 +20,45 @@ export const site = {
   footerNote: 'Demo concept. Prices and specifications are illustrative.',
 
   /* ---------- Section 1: Anatomy of Time ----------
-     Ordered sequence. Reorder or delete entries freely; the scroll
-     segments adapt to however many videos are listed here.
-     `poster` is used for reduced-motion visitors and as a fallback. */
+     `videos`   : the footage scrubbed by scroll, played in order. One clip is fine;
+                  with several, the scroll is split equally between them and the
+                  switch happens on the exact boundary (last frame = next first frame).
+     `chapters` : the captions, spread evenly over the whole pinned scroll,
+                  independent of how many videos there are. `poster` is shown to
+                  reduced-motion visitors instead of the video. */
   hero: {
     title: 'Anatomy of Time',
     cue: 'Scroll to explore',
-    scrollLengthPerVideo: 125, // in % of viewport height (4 videos x 125 = 500vh)
+    scrollLength: 500, // total pinned scroll, in % of viewport height
     lerp: 0.12, // smoothing toward the scroll target, 0..1 (lower = softer)
     videos: [
+      { src: '/media/scroll.mp4', poster: '/img/hero-poster.jpg' },
+      // Previous four-clip sequence, still in /public/media if you want it back:
+      // { src: '/media/hero-1.mp4', poster: '/img/hero-poster.jpg' },
+      // { src: '/media/hero-2.mp4', poster: '/img/exploded-1.jpg' },
+      // { src: '/media/hero-3.mp4', poster: '/img/exploded-2.jpg' },
+      // { src: '/media/hero-4.mp4', poster: '/img/exploded-3.jpg' },
+    ],
+    chapters: [
       {
-        src: '/media/hero-1.mp4',
         poster: '/img/hero-poster.jpg',
         eyebrow: '01 — The Crystal',
         title: 'Sapphire, cut to disappear.',
         line: 'Anti-reflective on both sides, set in an octagonal bezel held by eight hexagonal screws.',
       },
       {
-        src: '/media/hero-2.mp4',
         poster: '/img/exploded-1.jpg',
         eyebrow: '02 — The Dial',
         title: 'A calendar that thinks in centuries.',
         line: 'Perpetual calendar with day, date, month, week and an astronomical moon phase.',
       },
       {
-        src: '/media/hero-3.mp4',
         poster: '/img/exploded-2.jpg',
         eyebrow: '03 — The Hands',
         title: 'Gold, faceted by hand.',
         line: 'Each hand is polished and bevelled, then set at 10:10 for balance.',
       },
       {
-        src: '/media/hero-4.mp4',
         poster: '/img/exploded-3.jpg',
         eyebrow: '04 — The Movement',
         title: 'The heart, laid open.',

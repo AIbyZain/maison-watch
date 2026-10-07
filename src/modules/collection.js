@@ -23,7 +23,7 @@ export function buildCollection(section) {
         ${products
           .map(
             (p, i) => `
-          <article class="panel" data-index="${i}">
+          <article class="panel" data-index="${i}" style="--ratio: ${p.width || 1376} / ${p.height || 768}">
             <button class="panel__open" type="button" data-cursor="View" aria-label="View details: ${esc(p.name)}">
               <span class="panel__word" aria-hidden="true">${esc(p.word)}</span>
               <figure class="panel__figure">
@@ -205,7 +205,7 @@ export function initCollection(section, { lockScroll, scrollToTarget }) {
       <div class="detail__backdrop" data-close></div>
       <button class="detail__close" type="button" aria-label="Close details">✕</button>
       <div class="detail__inner">
-        <figure class="detail__figure">
+        <figure class="detail__figure" style="--ratio: ${p.width || 1376} / ${p.height || 768}">
           <img src="${esc(p.image)}" alt="${esc(p.name)}" width="${p.width || 1376}" height="${p.height || 768}" />
         </figure>
         <div class="detail__body">
