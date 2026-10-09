@@ -27,32 +27,32 @@ export const site = {
   hero: {
     title: 'Anatomy of Time',
     cue: 'Scroll to explore',
-    scrollLength: 300, // total pinned scroll, in % of viewport height (lower = faster)
+    scrollLength: 400, // total pinned scroll, in % of viewport height (lower = faster)
 
     frames: {
       prefix: 'f_',
       pad: 4,
       ext: '.webp',
       parallel: 6, // simultaneous image requests
-      // Desktop set: all four sequences in order, 529 frames.
+      // Desktop set: one continuous shot, 192 frames.
       desktop: {
         path: '/hero-frames/desktop/',
-        count: 529,
+        count: 192,
         width: 1280,
         height: 720,
-        segments: [1, 97, 241, 385],
-        end: 529,
+        segments: [1, 49, 97, 145],
+        end: 192,
         lerp: 0.15,
       },
-      // Mobile set: every second frame, 264 frames (desktop frame = 2 x mobile - 1).
+      // Mobile set: every second frame, 96 frames.
       // Used when the viewport is under 768 px, Data Saver is on, or deviceMemory <= 4.
       mobile: {
         path: '/hero-frames/mobile/',
-        count: 264,
+        count: 96,
         width: 720,
         height: 405,
-        segments: [1, 49, 121, 193],
-        end: 264,
+        segments: [1, 25, 49, 73],
+        end: 96,
         lerp: 0.2,
       },
     },

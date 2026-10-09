@@ -251,8 +251,11 @@ html.lenis body {
 .nav {
   position: fixed;
   top: 16px;
-  left: 16px;
-  right: 16px;
+  /* Centred, with a 15% gap on each side. On narrower desktops the gap shrinks
+     only as much as needed to keep 56px between the logo and the links
+     (the bar never gets narrower than ~860px before the menu takes over). */
+  left: clamp(16px, calc((100vw - 860px) / 2), 15vw);
+  right: clamp(16px, calc((100vw - 860px) / 2), 15vw);
   z-index: var(--z-nav);
   height: var(--pill-h);
   display: flex;

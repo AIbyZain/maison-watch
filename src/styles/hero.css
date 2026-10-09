@@ -39,9 +39,12 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Soft radial vignette around the centred watch, plus a subtle dark
+     gradient in the lower-left so the captions stay readable as the
+     layers spread sideways. */
   background:
-    radial-gradient(ellipse 85% 80% at 55% 50%, transparent 52%, rgba(11, 10, 9, 0.85) 100%),
-    linear-gradient(90deg, rgba(11, 10, 9, 0.72) 0%, rgba(11, 10, 9, 0.25) 34%, transparent 55%);
+    radial-gradient(ellipse 80% 78% at 50% 48%, transparent 55%, rgba(11, 10, 9, 0.88) 100%),
+    radial-gradient(ellipse 55% 50% at 0% 100%, rgba(11, 10, 9, 0.78) 0%, rgba(11, 10, 9, 0.35) 55%, transparent 100%);
 }
 
 /* Intro title (fades as scrolling begins) */
@@ -96,16 +99,17 @@
 .hero__copy {
   position: absolute;
   left: var(--gutter);
-  top: 50%;
-  transform: translateY(-50%);
-  width: min(440px, 38vw);
-  min-height: 260px;
+  bottom: clamp(40px, 9vh, 96px);
+  width: min(360px, 40vw);
+  height: 280px;
   pointer-events: none;
 }
+/* Captions sit in the lower-left corner, anchored to the bottom edge */
 .hero__panel {
   position: absolute;
-  inset: auto 0 auto 0;
-  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   opacity: 0;
   visibility: hidden;
 }
@@ -114,9 +118,9 @@
   margin-bottom: 22px;
 }
 .hero__panel h2 {
-  font-size: clamp(36px, 3.8vw, 60px);
-  line-height: 1.02;
-  margin-bottom: 22px;
+  font-size: clamp(32px, 2.8vw, 44px);
+  line-height: 1.05;
+  margin-bottom: 18px;
 }
 .hero__panel p:last-child {
   color: var(--muted);
@@ -185,7 +189,7 @@
   .hero__vignette {
     background:
       radial-gradient(ellipse 110% 70% at 50% 42%, transparent 50%, rgba(11, 10, 9, 0.8) 100%),
-      linear-gradient(0deg, rgba(11, 10, 9, 0.92) 0%, rgba(11, 10, 9, 0.55) 30%, transparent 52%);
+      linear-gradient(0deg, rgba(11, 10, 9, 0.9) 0%, rgba(11, 10, 9, 0.5) 30%, transparent 50%);
   }
   .hero__copy {
     top: auto;
@@ -195,10 +199,6 @@
     right: calc(var(--gutter) + 28px);
     min-height: 0;
     height: 230px;
-  }
-  .hero__panel {
-    top: auto;
-    bottom: 0;
   }
   .hero__panel h2 {
     font-size: 34px;

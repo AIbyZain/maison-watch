@@ -28,10 +28,10 @@ Everything you are likely to change is in this one file:
 | `currency` | Prefix for prices, e.g. `PKR`, `AED`, `USD` |
 | `address`, `instagram`, `hours`, `footerNote` | Footer content |
 | `hero.frames` | The image sequence: folder paths, frame counts, frame size, file naming (`f_` + 4-digit number + `.webp`), parallel requests |
-| `hero.frames.desktop.segments` / `.mobile.segments` | First frame of each chapter (desktop 1, 97, 241, 385, end 529; mobile 1, 49, 121, 193, end 264). Captions and dots switch on these |
+| `hero.frames.desktop.segments` / `.mobile.segments` | First frame of each chapter (desktop 1, 49, 97, 145, end 192; mobile 1, 25, 49, 73, end 96). Captions and dots switch on these |
 | `hero.frames.*.lerp` | How fast the frame catches up with the scroll (0.15 desktop, 0.2 mobile) |
 | `hero.chapters` | The four captions (eyebrow, title, line) |
-| `hero.scrollLength` | Total pinned scroll, in % of viewport height (default 300). Lower = the sequence plays faster per scroll |
+| `hero.scrollLength` | Total pinned scroll, in % of viewport height (default 400). Lower = the sequence plays faster per scroll |
 | `hero.loaderMaxWait` | Safety cap (ms) for very slow connections: the loader never waits longer than this for the first pass of frames |
 | `setTime` | Heading, model line, specs, city chips (IANA time zones), dial crop/pivot, hand pivots, hand lengths, beat rate |
 | `setTime.hands.hour.filter` | CSS filter that turns the rose-gold hour hand steel. Set to `'none'` if you supply a steel hand |
@@ -43,8 +43,8 @@ Everything you are likely to change is in this one file:
 Keep the same file names and paths, or update the paths in `site.js`.
 
 ```
-public/hero-frames/desktop/f_0001.webp … f_0529.webp   hero sequence, 1280x720
-public/hero-frames/mobile/f_0001.webp … f_0264.webp    every second frame, 720x405
+public/hero-frames/desktop/f_0001.webp … f_0192.webp   hero sequence (one continuous shot), 1280x720
+public/hero-frames/mobile/f_0001.webp … f_0096.webp    every second frame, 720x405
 public/img/hero-poster.jpg, exploded-1.jpg … exploded-3.jpg   stills (not used by the hero any more)
 public/img/dial.jpg                      dial with NO hands
 public/img/hand-hour.jpg / hand-minute.jpg / hand-second.jpg
