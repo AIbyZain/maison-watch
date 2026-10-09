@@ -20,67 +20,64 @@ export const site = {
   footerNote: 'Demo concept. Prices and specifications are illustrative.',
 
   /* ---------- Section 1: Anatomy of Time ----------
-     `videos`   : the footage scrubbed by scroll, played in order. One clip is fine;
-                  with several, the scroll is split equally between them and the
-                  switch happens on the exact boundary (last frame = next first frame).
-     `chapters` : the captions, spread evenly over the whole pinned scroll,
-                  independent of how many videos there are. `poster` is shown to
-                  reduced-motion visitors instead of the video. */
+     The hero is a canvas image sequence (no video). Scroll picks the frame.
+     Files: <path>f_0001.webp … (4-digit padding), see `frames` below.
+     `segments` are the first frame of each chapter (1-based) and `end` the last
+     frame; captions and progress dots switch on those boundaries. */
   hero: {
     title: 'Anatomy of Time',
     cue: 'Scroll to explore',
-    scrollLength: 300, // total pinned scroll, in % of viewport height (lower = faster film)
-    lerp: 0.22, // catch-up per frame toward the scroll position, 0..1 (higher = snappier)
-    fps: 24, // frame rate of the hero footage
+    scrollLength: 300, // total pinned scroll, in % of viewport height (lower = faster)
 
-    /* Slow connections. The site never waits for the whole film:
-       the loader leaves after `loaderMaxWait` ms at most, the hero shows the
-       chapter posters while the film downloads, then switches to the video.
-       Data-saver / 2G visitors get posters only, no video download at all. */
-    network: {
-      loaderMaxWait: 3500, // ms the loader may wait for the film
-      stallTimeout: 15000, // ms without any data before the download is abandoned
-      totalTimeout: 120000, // ms before a download is abandoned altogether
+    frames: {
+      prefix: 'f_',
+      pad: 4,
+      ext: '.webp',
+      parallel: 6, // simultaneous image requests
+      // Desktop set: all four sequences in order, 529 frames.
+      desktop: {
+        path: '/hero-frames/desktop/',
+        count: 529,
+        width: 1280,
+        height: 720,
+        segments: [1, 97, 241, 385],
+        end: 529,
+        lerp: 0.15,
+      },
+      // Mobile set: every second frame, 264 frames (desktop frame = 2 x mobile - 1).
+      // Used when the viewport is under 768 px, Data Saver is on, or deviceMemory <= 4.
+      mobile: {
+        path: '/hero-frames/mobile/',
+        count: 264,
+        width: 720,
+        height: 405,
+        segments: [1, 49, 121, 193],
+        end: 264,
+        lerp: 0.2,
+      },
     },
 
-    /* After the film downloads, its frames are cached as images in the browser
-       (no server work). Scrubbing then draws images instead of seeking video,
-       which is instant on every device. Set enabled: false to keep video seeking. */
-    frameCache: {
-      enabled: true,
-      maxWidth: 1600, // px, desktop
-      mobileMaxWidth: 960, // px, screens under 768 px
-      quality: 0.82, // JPEG quality of cached frames
-    },
-    videos: [
-      { src: '/media/scroll.mp4', poster: '/img/hero-poster.jpg' },
-      // Previous four-clip sequence, still in /public/media if you want it back:
-      // { src: '/media/hero-1.mp4', poster: '/img/hero-poster.jpg' },
-      // { src: '/media/hero-2.mp4', poster: '/img/exploded-1.jpg' },
-      // { src: '/media/hero-3.mp4', poster: '/img/exploded-2.jpg' },
-      // { src: '/media/hero-4.mp4', poster: '/img/exploded-3.jpg' },
-    ],
+    // Safety cap for very slow connections: the loader waits for the first
+    // pass of frames (frame 1 + every 8th) but never longer than this.
+    loaderMaxWait: 8000, // ms
+
     chapters: [
       {
-        poster: '/img/hero-poster.jpg',
         eyebrow: '01 — The Crystal',
         title: 'Sapphire, cut to disappear.',
         line: 'Anti-reflective on both sides, set in an octagonal bezel held by eight hexagonal screws.',
       },
       {
-        poster: '/img/exploded-1.jpg',
         eyebrow: '02 — The Dial',
         title: 'A calendar that thinks in centuries.',
         line: 'Perpetual calendar with day, date, month, week and an astronomical moon phase.',
       },
       {
-        poster: '/img/exploded-2.jpg',
         eyebrow: '03 — The Hands',
         title: 'Gold, faceted by hand.',
         line: 'Each hand is polished and bevelled, then set at 10:10 for balance.',
       },
       {
-        poster: '/img/exploded-3.jpg',
         eyebrow: '04 — The Movement',
         title: 'The heart, laid open.',
         line: 'Self-winding calibre, hand-finished bridges, visible through the skeleton dial.',

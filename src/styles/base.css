@@ -27,8 +27,8 @@
   --fs-h1: clamp(52px, 8vw, 132px);
 
   --gutter: clamp(20px, 4vw, 64px);
-  --pill-h: 56px;
-  --nav-h: 84px; /* space reserved below the floating pill */
+  --pill-h: 76px;
+  --nav-h: 100px; /* space reserved below the floating bar */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* z-index scale */
@@ -245,71 +245,88 @@ html.lenis body {
 /* ==========================================================================
    Navigation
    ========================================================================== */
-/* Floating pill. Positioned with margins, never transforms: a transform or
-   filter on the bar would trap the fixed mobile menu inside it. */
+/* Floating pill bar: logo left, links right.
+   Positioned with insets, never transforms: a transform or filter on the bar
+   would trap the fixed mobile menu inside it. */
 .nav {
   position: fixed;
   top: 16px;
-  left: 0;
-  right: 0;
+  left: 16px;
+  right: 16px;
   z-index: var(--z-nav);
-  width: fit-content;
-  max-width: calc(100% - 32px);
-  margin: 0 auto;
   height: var(--pill-h);
   display: flex;
   align-items: center;
-  gap: clamp(28px, 4vw, 64px);
-  padding: 0 6px 0 26px;
+  justify-content: space-between;
+  gap: 56px; /* minimum clear space between the logo and the first link */
+  padding: 0 clamp(20px, 4vw, 64px);
   border: 1px solid rgba(236, 230, 221, 0.12);
   border-radius: 999px;
   background-color: rgba(19, 17, 15, 0.42);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(236, 230, 221, 0.06), 0 18px 48px rgba(0, 0, 0, 0.35);
   transition: background-color 0.9s var(--ease), border-color 0.9s var(--ease);
 }
 .nav.is-scrolled {
   background-color: rgba(19, 17, 15, 0.78);
   border-color: rgba(201, 162, 122, 0.22);
 }
+/* While the hero canvas is pinned, no blur is composited above it:
+   a solid tint instead keeps every scroll frame cheap. */
+html.hero-pinned .nav {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: rgba(19, 17, 15, 0.82);
+}
 .nav__brand {
   position: relative;
   z-index: 2;
+  flex: 0 0 auto;
   font-family: var(--serif);
   font-size: 17px;
   font-weight: 400;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.28em;
   white-space: nowrap;
 }
 .nav__menu ul {
   display: flex;
-  gap: 2px;
+  align-items: center;
+  gap: clamp(28px, 3vw, 48px);
 }
 .nav__menu a {
-  display: flex;
-  align-items: center;
-  height: calc(var(--pill-h) - 12px);
-  padding: 0 16px;
-  border-radius: 999px;
-  font-size: var(--fs-label);
+  position: relative;
+  display: inline-block;
+  padding: 8px 0;
+  font-family: var(--sans);
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--muted);
-  transition: color 0.6s var(--ease), background-color 0.6s var(--ease);
+  transition: color 0.6s var(--ease);
+}
+/* Thin underline that grows from the left */
+.nav__menu a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 1px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.7s var(--ease);
 }
 .nav__menu a:hover,
-.nav__menu a:focus-visible {
-  color: var(--bone);
-  background-color: rgba(236, 230, 221, 0.06);
-}
+.nav__menu a:focus-visible,
 .nav__menu a[aria-current='true'] {
-  color: var(--ink);
-  background-color: var(--gold);
+  color: var(--bone);
 }
-.nav__menu a:focus-visible {
-  outline-offset: 2px;
+.nav__menu a:hover::after,
+.nav__menu a:focus-visible::after,
+.nav__menu a[aria-current='true']::after {
+  transform: scaleX(1);
 }
 .nav__toggle {
   display: none;
@@ -318,6 +335,7 @@ html.lenis body {
   border-radius: 50%;
   position: relative;
   z-index: 2;
+  margin-right: -10px;
 }
 .nav__toggle-line {
   position: absolute;
@@ -340,38 +358,19 @@ html.lenis body {
   transform: translateY(-3.5px) rotate(-45deg);
 }
 
-/* Tablet: tighter pill */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .nav {
-    gap: 20px;
-    padding-left: 20px;
-  }
-  .nav__brand {
-    font-size: 15px;
-    letter-spacing: 0.22em;
-  }
-  .nav__menu a {
-    padding: 0 11px;
-    letter-spacing: 0.14em;
-  }
-}
-
-@media (max-width: 767px) {
+/* Below ~900px the links can no longer keep 56px from the logo: use the menu. */
+@media (max-width: 900px) {
   :root {
-    --pill-h: 52px;
+    --pill-h: 64px;
+    --nav-h: 80px;
   }
   .nav {
     top: 12px;
-    width: auto;
-    max-width: none;
     left: 12px;
     right: 12px;
-    justify-content: space-between;
-    padding: 0 4px 0 20px;
   }
   .nav__brand {
     font-size: 15px;
-    letter-spacing: 0.26em;
   }
   .nav__toggle {
     display: block;
@@ -388,13 +387,13 @@ html.lenis body {
     visibility: hidden;
     transition: opacity 0.7s var(--ease), visibility 0s linear 0.7s;
   }
-  /* backdrop-filter would trap the fixed menu inside the pill */
-  .nav.is-open {
+  /* backdrop-filter would trap the fixed menu inside the bar */
+  .nav.is-open,
+  html.hero-pinned .nav.is-open {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     background-color: transparent;
     border-color: transparent;
-    box-shadow: none;
   }
   .nav.is-open .nav__menu {
     opacity: 1;
@@ -403,23 +402,23 @@ html.lenis body {
   }
   .nav__menu ul {
     flex-direction: column;
+    align-items: flex-start;
     gap: 8px;
   }
   .nav__menu a {
-    height: auto;
     padding: 4px 0;
-    border-radius: 0;
     font-family: var(--serif);
     font-size: 40px;
     font-weight: 300;
     letter-spacing: 0;
     text-transform: none;
     color: var(--bone);
-    background: none;
+  }
+  .nav__menu a::after {
+    display: none;
   }
   .nav__menu a[aria-current='true'] {
     color: var(--gold);
-    background: none;
   }
 }
 
@@ -486,78 +485,118 @@ html.lenis body {
 }
 
 /* ==========================================================================
-   Cursor (desktop, fine pointers only; enabled by JS)
+   Cursor (desktop, fine pointers only; enabled by cursor.js)
+   Dot and ring are separate fixed elements so mix-blend-mode: difference
+   blends with the page itself. JS moves them with translate3d only; every
+   state change animates scale/opacity on the inner elements.
    ========================================================================== */
-.cursor {
+.cursor-ring,
+.cursor-dot {
   display: none;
 }
-html.has-cursor .cursor {
+html.has-cursor .cursor-ring,
+html.has-cursor .cursor-dot {
   display: block;
   position: fixed;
   left: 0;
   top: 0;
   z-index: var(--z-cursor);
+  width: 0;
+  height: 0;
   pointer-events: none;
+  mix-blend-mode: difference;
+  will-change: transform;
 }
-.cursor__ring {
+.cursor-ring__circle {
   position: absolute;
-  left: -18px;
-  top: -18px;
-  width: 36px;
-  height: 36px;
-  border: 1px solid rgba(236, 230, 221, 0.55);
+  left: -17px;
+  top: -17px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(201, 162, 122, 0.6);
   border-radius: 50%;
-  transition: transform 0.7s var(--ease), border-color 0.7s var(--ease), opacity 0.4s var(--ease);
+  transition: transform 0.35s var(--ease), opacity 0.35s var(--ease);
 }
-.cursor__label {
+.cursor-ring__label {
   position: absolute;
   left: 0;
   top: 0;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.8);
+  font-family: var(--sans);
   font-size: 10px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
+  padding-left: 0.2em; /* optically centre the tracking */
   text-transform: uppercase;
-  color: var(--bone);
   white-space: nowrap;
+  color: #ece6dd;
   opacity: 0;
-  transition: opacity 0.5s var(--ease);
+  transition: transform 0.35s var(--ease), opacity 0.35s var(--ease);
 }
-.cursor.is-hover .cursor__ring {
-  transform: scale(1.6);
-  border-color: var(--gold);
-}
-.cursor.is-label .cursor__ring {
-  transform: scale(2.3);
-  border-color: var(--gold);
-}
-.cursor.is-label .cursor__label {
-  opacity: 1;
-}
-.cursor.is-hidden .cursor__ring {
-  opacity: 0;
-}
-html.has-cursor .cursor {
-  transition: opacity 0.4s var(--ease);
-}
-/* Centre point, so the hidden native arrow is never missed */
-html.has-cursor .cursor::before {
-  content: '';
+.cursor-dot__core {
   position: absolute;
-  left: -2px;
-  top: -2px;
-  width: 4px;
-  height: 4px;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--gold);
+  background: #ece6dd;
+  transition: transform 0.35s var(--ease), opacity 0.35s var(--ease);
 }
-html.has-cursor .cursor.is-label::before,
-html.has-cursor .cursor.is-hidden::before {
+
+/* Links and buttons */
+html.cursor-link .cursor-ring__circle {
+  transform: scale(1.6);
+}
+html.cursor-link .cursor-dot__core {
   opacity: 0;
 }
+/* Collection panel: ring grows to 80px with a "View" label */
+html.cursor-view .cursor-ring__circle {
+  transform: scale(2.353);
+}
+/* Hovering a watch hand: "Drag" label */
+html.cursor-drag-hover .cursor-ring__circle {
+  transform: scale(2);
+}
+html.cursor-view .cursor-dot__core,
+html.cursor-drag-hover .cursor-dot__core {
+  opacity: 0;
+}
+html.cursor-view .cursor-ring__label,
+html.cursor-drag-hover .cursor-ring__label {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+/* Dragging a hand: ring tightens, dot grows slightly */
+html.cursor-dragging .cursor-ring__circle {
+  transform: scale(0.7);
+}
+html.cursor-dragging .cursor-dot__core {
+  opacity: 1;
+  transform: scale(1.4);
+}
+html.cursor-dragging .cursor-ring__label {
+  opacity: 0;
+}
+/* Mouse down */
+html.cursor-down:not(.cursor-dragging) .cursor-ring__circle {
+  transform: scale(0.85);
+}
+/* Text fields keep the native caret; pointer outside the window */
+html.cursor-text .cursor-ring__circle,
+html.cursor-text .cursor-dot__core,
+html.cursor-out .cursor-ring__circle,
+html.cursor-out .cursor-dot__core,
+html.cursor-out .cursor-ring__label {
+  opacity: 0;
+}
+
+/* Hide the native cursor only while the custom one is active */
 html.has-cursor,
 html.has-cursor body,
 html.has-cursor a,
 html.has-cursor button,
+html.has-cursor label,
 html.has-cursor .hand-hit,
 html.has-cursor .dialbox {
   cursor: none;

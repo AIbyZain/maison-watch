@@ -12,8 +12,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 
 import { site, whatsappLink } from './data/site.js';
-import { startDownloads, runLoader, hideLoader } from './modules/loader.js';
-import { buildHero, initHero } from './modules/hero.js';
+import { runLoader, hideLoader } from './modules/loader.js';
+import { buildHero, initHero, pickFrameSet, createFrameLoader } from './modules/hero.js';
 import { buildSetTime, initSetTime } from './modules/setTime.js';
 import { buildCollection, initCollection } from './modules/collection.js';
 import { buildViewing, initViewing } from './modules/viewing.js';
@@ -34,11 +34,12 @@ window.scrollTo(0, 0);
    -------------------------------------------------------------------------- */
 let lenis = null;
 if (!reduced) {
-  // lerp-based smoothing follows the wheel closely (a long `duration` felt sluggish).
+  // Native touch scrolling on phones (syncTouch: false). Lenis has no rAF of
+  // its own here: gsap.ticker is the ONLY driver.
   lenis = new Lenis({
-    lerp: 0.14,
+    lerp: 0.08,
     smoothWheel: true,
-    wheelMultiplier: 1,
+    syncTouch: false,
   });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((time) => lenis.raf(time * 1000));
@@ -112,13 +113,15 @@ const sections = {
   viewing: document.getElementById('viewing'),
 };
 
-buildHero(sections.hero, { reduced });
+// Hero frame set (desktop or mobile) is chosen once, on load.
+const frameSet = pickFrameSet();
+buildHero(sections.hero, { reduced, set: frameSet });
 buildSetTime(sections.setTime);
 buildCollection(sections.collection);
 buildViewing(sections.viewing);
 buildFooter(document.getElementById('footer'));
 
-// The watch prepares its hands while the videos download.
+// The watch prepares its hands while the hero frames load.
 const setTimeReady = initSetTime(sections.setTime, { reduced }).catch((err) =>
   console.error('[setTime] init failed', err)
 );
@@ -130,7 +133,7 @@ function initNav() {
   const nav = document.getElementById('nav');
   const toggle = nav.querySelector('.nav__toggle');
   const links = [...nav.querySelectorAll('.nav__menu a')];
-  const mobile = window.matchMedia('(max-width: 767px)');
+  const mobile = window.matchMedia('(max-width: 900px)'); // nav switches to the menu here
 
   const setOpen = (open) => {
     nav.classList.toggle('is-open', open);
@@ -182,22 +185,21 @@ function initNav() {
    Boot
    -------------------------------------------------------------------------- */
 async function boot() {
-  // Data saver or a 2G connection: never download the film, use posters.
-  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const constrained = !!(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || '')));
-  const sources = site.hero.videos.map((v) => v.src);
-  const downloads = reduced || constrained ? null : startDownloads(sources, site.hero.network);
+  // Progressive frame loading: frame 1, every 8th, every 4th, every 2nd, rest.
+  // Reduced motion uses two static frames, so nothing is preloaded.
+  const frames = reduced ? null : createFrameLoader(frameSet).start();
 
-  // Waits for the film, but never longer than loaderMaxWait. A slow download
-  // continues in the background and the hero upgrades itself when it lands.
-  await runLoader({ downloads, maxWait: site.hero.network.loaderMaxWait });
+  // Pinned ScrollTriggers are created in page order: hero first (so frame 1
+  // can paint behind the loader), collection after.
+  initHero(sections.hero, { reduced, set: frameSet, frames, scrollTo: scrollToTarget });
 
-  // Create pinned ScrollTriggers in page order: hero, then collection.
-  initHero(sections.hero, { downloads, reduced, scrollTo: scrollToTarget });
+  // The loader tracks the first pass only; the rest loads in the background.
+  await runLoader({ task: frames ? frames.firstPass : null, maxWait: site.hero.loaderMaxWait });
+
   initCollection(sections.collection, { reduced, lockScroll, scrollToTarget });
   initViewing(sections.viewing, { scrollToTarget });
   initNav();
-  initCursor({ reduced });
+  initCursor();
 
   await setTimeReady;
   ScrollTrigger.refresh();

@@ -140,14 +140,14 @@ export function buildSetTime(section) {
       </div>
 
       <div class="settime__watch">
-        <div class="dialbox" data-cursor="Drag">
+        <div class="dialbox">
           <img class="dialbox__img" src="${esc(cfg.dial.src)}" alt="Sunray green dial with baton indexes and a date window at 6 o’clock" width="1376" height="768" decoding="async" />
           <img class="hand hand--hour" alt="" />
           <img class="hand hand--minute" alt="" />
           <img class="hand hand--second" alt="" />
-          <div class="hand-hit hand-hit--hour" data-hand="hour" role="slider" tabindex="0"
+          <div class="hand-hit hand-hit--hour" data-hand="hour" data-cursor="Drag" role="slider" tabindex="0"
                aria-label="Hour hand. Use arrow keys to move by one hour." aria-valuemin="0" aria-valuemax="1439"></div>
-          <div class="hand-hit hand-hit--minute" data-hand="minute" role="slider" tabindex="0"
+          <div class="hand-hit hand-hit--minute" data-hand="minute" data-cursor="Drag" role="slider" tabindex="0"
                aria-label="Minute hand. Use arrow keys to move by one minute." aria-valuemin="0" aria-valuemax="1439"></div>
         </div>
 
@@ -435,6 +435,7 @@ export async function initSetTime(section, { reduced }) {
     drag = { hand, last: deg, id: e.pointerId };
     box.setPointerCapture(e.pointerId);
     box.classList.add('is-dragging');
+    document.dispatchEvent(new CustomEvent('cursor:drag', { detail: true }));
   });
 
   box.addEventListener('pointermove', (e) => {
@@ -448,6 +449,7 @@ export async function initSetTime(section, { reduced }) {
     if (!drag || e.pointerId !== drag.id) return;
     drag = null;
     box.classList.remove('is-dragging');
+    document.dispatchEvent(new CustomEvent('cursor:drag', { detail: false }));
     if (box.hasPointerCapture(e.pointerId)) box.releasePointerCapture(e.pointerId);
     endManual();
   };

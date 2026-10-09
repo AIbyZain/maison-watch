@@ -14,7 +14,6 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="preload" as="image" href="/img/hero-poster.jpg" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -68,7 +67,9 @@
     <div class="detail" id="detail" data-lenis-prevent role="dialog" aria-modal="true" aria-labelledby="detail-name" hidden></div>
 
     <div class="grain" aria-hidden="true"></div>
-    <div class="cursor" aria-hidden="true"><span class="cursor__ring"></span><span class="cursor__label"></span></div>
+    <!-- Custom cursor (desktop, fine pointers only; enabled by cursor.js) -->
+    <div class="cursor-ring" aria-hidden="true"><span class="cursor-ring__circle"></span><span class="cursor-ring__label"></span></div>
+    <div class="cursor-dot" aria-hidden="true"><span class="cursor-dot__core"></span></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

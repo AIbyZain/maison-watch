@@ -27,13 +27,12 @@ Everything you are likely to change is in this one file:
 | `whatsappDisplay` | The number as shown in the footer |
 | `currency` | Prefix for prices, e.g. `PKR`, `AED`, `USD` |
 | `address`, `instagram`, `hours`, `footerNote` | Footer content |
-| `hero.videos` | Footage scrubbed by scroll (currently `scroll.mp4`). Add more entries and the scroll is split equally between them. The old four clips are commented out there |
-| `hero.chapters` | The four captions (eyebrow, title, line) spread evenly over the pinned scroll, plus a `poster` each for reduced-motion visitors |
-| `hero.scrollLength` | Total pinned scroll, in % of viewport height (default 300). Lower = the film plays faster per scroll |
-| `hero.lerp` | How fast the film catches up with the scroll, 0 to 1 (default 0.22). Higher = snappier |
-| `hero.network` | Slow-connection handling: max loader wait, stall and total download timeouts |
-| `hero.frameCache` | In-browser frame cache for instant scrubbing (size and JPEG quality, or `enabled: false`) |
-| `hero.lerp` | Scrub smoothing, 0 to 1. Lower is softer |
+| `hero.frames` | The image sequence: folder paths, frame counts, frame size, file naming (`f_` + 4-digit number + `.webp`), parallel requests |
+| `hero.frames.desktop.segments` / `.mobile.segments` | First frame of each chapter (desktop 1, 97, 241, 385, end 529; mobile 1, 49, 121, 193, end 264). Captions and dots switch on these |
+| `hero.frames.*.lerp` | How fast the frame catches up with the scroll (0.15 desktop, 0.2 mobile) |
+| `hero.chapters` | The four captions (eyebrow, title, line) |
+| `hero.scrollLength` | Total pinned scroll, in % of viewport height (default 300). Lower = the sequence plays faster per scroll |
+| `hero.loaderMaxWait` | Safety cap (ms) for very slow connections: the loader never waits longer than this for the first pass of frames |
 | `setTime` | Heading, model line, specs, city chips (IANA time zones), dial crop/pivot, hand pivots, hand lengths, beat rate |
 | `setTime.hands.hour.filter` | CSS filter that turns the rose-gold hour hand steel. Set to `'none'` if you supply a steel hand |
 | `products` | The collection. `price: null` shows "Price on request". `word` is the large faint word behind each panel |
@@ -44,20 +43,17 @@ Everything you are likely to change is in this one file:
 Keep the same file names and paths, or update the paths in `site.js`.
 
 ```
-public/media/scroll.mp4                  hero scroll animation (muted, never autoplayed)
-public/media/hero-1.mp4 … hero-4.mp4     previous four-clip sequence (not loaded unless re-enabled)
-public/img/hero-poster.jpg               assembled watch, also the first-frame poster
-public/img/exploded-1.jpg … exploded-3.jpg   posters for chapters 2 to 4 (used for reduced motion)
+public/hero-frames/desktop/f_0001.webp … f_0529.webp   hero sequence, 1280x720
+public/hero-frames/mobile/f_0001.webp … f_0264.webp    every second frame, 720x405
+public/img/hero-poster.jpg, exploded-1.jpg … exploded-3.jpg   stills (not used by the hero any more)
 public/img/dial.jpg                      dial with NO hands
 public/img/hand-hour.jpg / hand-minute.jpg / hand-second.jpg
 public/img/gallery/watch-01.jpg … watch-04.jpg
 ```
 
-**Videos.** The last frame of each clip should match the first frame of the next:
-the site switches clips on the exact scroll boundary with no crossfade.
-Every listed video is downloaded as a Blob before the site opens (that is what the
-loader bar shows), because seeking a local Blob is smooth while seeking a streamed
-MP4 is not.
+**Hero frames.** If you replace the sequence, keep the naming (`f_0001.webp`, 4-digit
+padding, starting at 1) and update `count`, `width`, `height`, `segments` and `end`
+for each set in `site.js`.
 
 **Dial.** If you change the dial image, update `setTime.dial.pivot` (centre hole as a
 fraction of the image width/height) and `setTime.dial.crop` (side of the square crop
@@ -69,57 +65,50 @@ PNG. Update `pivot` (centre of the hand's pivot hole as a fraction of the image)
 the geometry changes. The tip is detected automatically, and each hand is scaled so
 the minute hand reaches the minute track (`setTime.lengths`).
 
-## Optional: even smoother scrubbing
-
-Re-encode each video so every frame is a keyframe and the audio track is removed:
-
-```bash
-ffmpeg -i scroll.mp4 -an -c:v libx264 -g 1 -crf 20 -pix_fmt yuv420p -movflags +faststart scroll-scrub.mp4
-```
-
-Then either rename the output to `scroll.mp4` or point `hero.videos[0].src` in
-`site.js` at the new file. Files get larger,
-but seeking becomes nearly instant on every browser.
-
 ## Structure
 
 ```
 index.html
 src/main.js                 boot, Lenis, nav, footer
 src/data/site.js            all editable content
-src/modules/loader.js       blob preloader + progress line
-src/modules/hero.js         pinned video scrub (Anatomy of Time)
+src/modules/loader.js       loader line (first pass of hero frames)
+src/modules/hero.js         pinned canvas image sequence (Anatomy of Time)
 src/modules/setTime.js      interactive watch, chroma key, drag, city times
 src/modules/collection.js   horizontal corridor + detail overlay
 src/modules/viewing.js      booking form to WhatsApp
-src/modules/cursor.js       desktop cursor ring
+src/modules/cursor.js       desktop cursor (dot + ring)
 src/styles/*.css
 ```
 
-## Slow connections and smooth scrubbing
+## Hero: how the image sequence stays smooth
 
-The site never waits for the whole film. The loader leaves after at most
-`hero.network.loaderMaxWait` (3.5 s). The hero then upgrades itself in three steps:
-
-1. **Posters**: the chapter images crossfade with scroll while the film downloads,
-   with a small "Loading film 42%" line under the nav.
-2. **Video**: once downloaded, the film is scrubbed by seeking.
-3. **Frames**: in the background the browser plays the film once, off screen, and keeps
-   every frame as a compressed image (about 10 to 15 MB in memory for 5 s at 24 fps).
-   Scrubbing then draws images to a canvas, which is instant on every device. Each switch
-   happens on an identical frame, so it is invisible.
-
-If the download stalls (`stallTimeout`) or times out (`totalTimeout`), the hero stays
-on posters. Visitors with Data Saver on, or on a 2G connection, never download the
-film at all.
+- **Frame set**, chosen once on load: the mobile set when the viewport is under 768 px,
+  Data Saver is on, or `navigator.deviceMemory` is 4 or less; otherwise desktop.
+- **Progressive loading**: frame 1 first (shown at once), then every 8th frame,
+  every 4th, every 2nd, then the rest, 6 requests at a time. Each image is decoded
+  (`img.decode()`) before it counts as ready. The loader only waits for the first
+  pass (frame 1 + every 8th); the rest loads in the background. If a frame is not
+  ready yet, the nearest loaded one is drawn, so the canvas is never blank.
+- **Drawing**: ScrollTrigger only sets a target frame. One `requestAnimationFrame` loop
+  eases toward it and calls `drawImage` only when the rounded frame changes. The loop
+  pauses when the hero is off screen. Canvas size and cover-crop maths are computed
+  only on resize (debounced).
+- **Lenis** (lerp 0.08, native touch scrolling) is driven only by `gsap.ticker`.
+- **No blur over the canvas**: the nav swaps its backdrop blur for a solid tint
+  while the hero is pinned.
 
 ## Behaviour notes
 
 - **Reduced motion** (`prefers-reduced-motion: reduce`): no smooth scroll, no pinning,
-  no video scrubbing. The hero becomes poster images with simple fades, the collection
+  no scrubbing. The hero shows the first and last frames as still images with the
+  captions, the collection
   becomes a native swipe row, and city changes jump instead of gliding.
 - **Mobile (< 768 px)**: the collection is a native horizontal swipe with scroll-snap.
   On touch screens the watch hands are dragged by touching the hands themselves,
   so the page still scrolls over the dial.
+- **Navigation**: below 900 px the links collapse into a menu, so the logo always keeps
+  at least 56 px of clear space from the first link.
+- **Cursor**: a dot and a lagging ring, desktop mice and trackpads only. Touch
+  devices keep their native behaviour.
 - **Keyboard**: the hour and minute hands are sliders (arrow keys, Page Up/Down),
   city chips are buttons, and the detail overlay traps focus and closes with Esc.
